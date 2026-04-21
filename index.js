@@ -22,6 +22,10 @@ app.get('/run', async (req, res) => {
   try {
     browser = await chromium.launch({
       headless: true,
+
+      // 👇 これ追加（超重要）
+      channel: 'chromium',
+
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
