@@ -1,3 +1,6 @@
+// 🔥 これ最重要（Render対策）
+process.env.PLAYWRIGHT_BROWSERS_PATH = '/opt/render/.cache/ms-playwright';
+
 const express = require('express');
 const { chromium } = require('playwright');
 
@@ -19,8 +22,10 @@ app.get('/run', async (req, res) => {
     return res.status(400).json({ error: 'URLを指定しろ' });
   }
 
+  let browser;
+
   try {
-    const browser = await chromium.launch({
+    browser = await chromium.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
@@ -32,20 +37,21 @@ app.get('/run', async (req, res) => {
       timeout: 30000
     });
 
-    // 🔥 入力フィールド全部取得
+    // 🔥 フォーム要素全部取得（強化版）
     const inputs = await page.$$eval('input, textarea, select', els =>
       els.map(el => ({
         tag: el.tagName,
-        name: el.name,
-        id: el.id,
-        placeholder: el.placeholder,
-        type: el.type
+        name: el.name || null,
+        id: el.id || null,
+        placeholder: el.placeholder || null,
+        type: el.type || null,
+        value: el.value || null,
+        required: el.required || false
       }))
     );
 
-    await browser.close();
-
     res.json({
+      success: true,
       url: targetUrl,
       count: inputs.length,
       inputs
@@ -53,8 +59,13 @@ app.get('/run', async (req, res) => {
 
   } catch (error) {
     res.status(500).json({
+      success: false,
       error: error.message
     });
+  } finally {
+    if (browser) {
+      await browser.close();
+    }
   }
 });
 
