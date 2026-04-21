@@ -22,10 +22,6 @@ app.get('/run', async (req, res) => {
   try {
     browser = await chromium.launch({
       headless: true,
-
-      // 👇 ここが最重要（これ入れないと絶対動かない）
-      executablePath: '/opt/render/.cache/ms-playwright/chromium-1217/chrome-linux/chrome',
-
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
