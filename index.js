@@ -1,20 +1,15 @@
-// 🔥 これ最重要（Render対策）
 process.env.PLAYWRIGHT_BROWSERS_PATH = '/opt/render/.cache/ms-playwright';
 
 const express = require('express');
 const { chromium } = require('playwright');
 
 const app = express();
-
-// 🔥 Render対応
 const PORT = process.env.PORT || 3000;
 
-// 🔥 トップ確認用
 app.get('/', (req, res) => {
   res.send('OK');
 });
 
-// 🔥 フォーム解析API
 app.get('/run', async (req, res) => {
   const targetUrl = req.query.url;
 
@@ -27,6 +22,10 @@ app.get('/run', async (req, res) => {
   try {
     browser = await chromium.launch({
       headless: true,
+
+      // 👇 ここが最重要（これ入れないと絶対動かない）
+      executablePath: '/opt/render/.cache/ms-playwright/chromium-1217/chrome-linux/chrome',
+
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     });
 
@@ -37,7 +36,6 @@ app.get('/run', async (req, res) => {
       timeout: 30000
     });
 
-    // 🔥 フォーム要素全部取得（強化版）
     const inputs = await page.$$eval('input, textarea, select', els =>
       els.map(el => ({
         tag: el.tagName,
@@ -63,13 +61,10 @@ app.get('/run', async (req, res) => {
       error: error.message
     });
   } finally {
-    if (browser) {
-      await browser.close();
-    }
+    if (browser) await browser.close();
   }
 });
 
-// 🔥 サーバー起動
 app.listen(PORT, () => {
   console.log(`🔥 Server running on port ${PORT}`);
 });
